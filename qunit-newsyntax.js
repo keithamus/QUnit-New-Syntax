@@ -5,7 +5,7 @@ QUnit.testCase = function (modname, testObj) {
     if (typeof modname === 'string') {
         QUnit.module(modname, {
             setup: testObj.setup || function (){},
-            teardown: testObj.setup || function (){}
+            teardown: testObj.teardown || function (){}
         });
     } else {
         testObj = modname;
@@ -31,17 +31,19 @@ QUnit.testCase = function (modname, testObj) {
 
                 // Override the setup methods to include the parents setup method, so 
                 // we can have submodules that inherit their parent modules setups
-                oldMethod = subTestObj.setup || function () {};
-                subTestObj.setup = function () {
-                    testObj.setup.call(this, arguments);
-                    oldMethod.call(this, arguments);
-                }
+                (function (newSetup, oldSetup, testObject) {
+                    testObject.setup = function () {
+                        oldSetup && oldSetup.call(this, arguments);
+                        newSetup && newSetup.call(this, arguments);
+                    };
+                })(subTestObj.setup, testObj.setup, subTestObj);
 
-                oldMethod = subTestObj.teardown || function () {};
-                subTestObj.teardown = function () {
-                    testObj.teardown.call(this, arguments);
-                    oldMethod.call(this, arguments);
-                }
+                (function (newTeardown, oldTeardown, testObject) {
+                    testObject.teardown = function () {
+                        oldTeardown && oldTeardown.call(this, arguments);
+                        newTeardown && newTeardown.call(this, arguments);
+                    };
+                })(subTestObj.teardown, testObj.teardown, subTestObj);
 
                 // Finally, recurse bitches!
                 QUnit.testCase(modname + ': ' + testName, subTestObj);
