@@ -52,3 +52,40 @@ QUnit.testCase = function (modname, testObj) {
         }
     }
 };
+
+(function (window, config) {
+    function addEvent(elem, type, fn) {
+        if ( elem.addEventListener ) {
+            elem.addEventListener( type, fn, false );
+        } else if ( elem.attachEvent ) {
+            elem.attachEvent( "on" + type, fn );
+        } else {
+            fn();
+        }
+    }
+
+    function processFilter(filter) {
+        filter = filter.split(':');
+        if (filter[filter.length-1] === '') {
+            filter.pop();
+        }
+        for (var totalFilter = '', i = 0; i < filter.length; ++i) {
+            totalFilter += filter[i] + (i+1 !== filter.length ? ':' : '' );
+            if (i+1 !== filter.length) {
+                filter[i] = '<a href="' + QUnit.url({ filter: totalFilter }) + '">' + filter[i] + '</a><i>:</i>';
+            }
+        }
+        return filter.join(' ');
+    }
+
+    addEvent(window, 'load', function () {
+
+        var beforeNode = document.getElementById('qunit-userAgent');
+        var qunit = document.getElementById('qunit');
+        var filterEl = document.createElement('div');
+        filterEl.id = 'qunit-filterText';
+        filterEl.innerHTML = '<h3>Filter:</h3>' + processFilter(QUnit.urlParams.filter || '');
+        qunit.insertBefore(filterEl, beforeNode);
+    });
+
+})(window, QUnit.config);
